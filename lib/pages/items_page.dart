@@ -137,6 +137,31 @@ class _ItemsPageState extends State<ItemsPage> {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      if (quantity == 1)
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 8.0,
+                          children: widget.people.map((person) {
+                            final isSelected = itemAssignments[itemName]?[person] == 1;
+
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  itemAssignments[itemName]![person] =
+                                      isSelected ? 0 : 1;
+                                  logger.d(
+                                      '$person toggled for $itemName: ${itemAssignments[itemName]}');
+                                });
+                              },
+                              child: Chip(
+                                label: Text(person),
+                                backgroundColor: isSelected
+                                    ? Colors.green[200]
+                                    : Colors.grey[300],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       if (quantity > 1 && isShareable)
                         Wrap(
                           spacing: 8.0,
@@ -228,7 +253,7 @@ class _ItemsPageState extends State<ItemsPage> {
                           }).toList(),
                         ),
                       const SizedBox(height: 8),
-                      if (!isShareable)
+                      if (!isShareable && quantity > 1)
                         Text(
                           'Individual counts: ${_getTotalAssigned(itemName)} of $quantity units assigned',
                           style: TextStyle(
