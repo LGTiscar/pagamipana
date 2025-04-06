@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:pagamipana/services/receipt_processor.dart';
+import 'package:pagamipana/pages/people_page.dart'; // Import PeoplePage
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter bindings are initialized
   runApp(const MyApp());
 }
 
@@ -32,6 +35,7 @@ class _UploadBillPageState extends State<UploadBillPage> {
   bool isPanelCollapsed = true;
   String? uploadedImagePath;
   int currentStep = 1;
+  final ReceiptProcessor receiptProcessor = ReceiptProcessor(); // Ensure proper initialization
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -85,12 +89,37 @@ class _UploadBillPageState extends State<UploadBillPage> {
     );
   }
 
+  Future<void> _processImageAndNavigate() async {
+    if (uploadedImagePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload or take a photo first.')),
+      );
+      return;
+    }
+
+    try {
+      final imageBytes = await File(uploadedImagePath!).readAsBytes();
+      await receiptProcessor.processReceipt(imageBytes); // Ensure this call is correct
+
+      setState(() {
+        currentStep = 2; // Navigate to the People page
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error processing receipt: $e')),
+      );
+    }
+  }
+
   Widget _getCurrentPage() {
     switch (currentStep) {
       case 1:
         return _buildUploadContent();
       case 2:
-        return const Placeholder();
+        return PeoplePage(
+          onBack: () => setState(() => currentStep = 1),
+          onNext: () => setState(() => currentStep = 3),
+        );
       case 3:
         return const Placeholder();
       case 4:
@@ -163,6 +192,11 @@ class _UploadBillPageState extends State<UploadBillPage> {
                     fit: BoxFit.cover,
                   ),
           ),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _processImageAndNavigate,
+          child: const Text('Next'),
         ),
       ],
     );
