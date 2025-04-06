@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -29,6 +31,28 @@ class UploadBillPage extends StatefulWidget {
 class _UploadBillPageState extends State<UploadBillPage> {
   bool isPanelCollapsed = true;
   String? uploadedImagePath;
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        uploadedImagePath = image.path;
+      });
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+
+    if (photo != null) {
+      setState(() {
+        uploadedImagePath = photo.path;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,11 +144,19 @@ class _UploadBillPageState extends State<UploadBillPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            // TODO: Implement image upload or capture functionality
-                          },
-                          child: const Text('Select Image'),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: _pickImage,
+                              child: const Text('Upload Image'),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: _takePhoto,
+                              child: const Text('Take Photo'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -157,8 +189,8 @@ class _UploadBillPageState extends State<UploadBillPage> {
                                 ),
                               ],
                             )
-                          : Image.network(
-                              uploadedImagePath!,
+                          : Image.file(
+                              File(uploadedImagePath!),
                               fit: BoxFit.cover,
                             ),
                     ),
