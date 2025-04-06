@@ -60,6 +60,25 @@ class _PeoplePageState extends State<PeoplePage> {
         ),
         const SizedBox(height: 16),
         if (people.isNotEmpty)
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            children: people
+                .map(
+                  (person) => Chip(
+                    label: Text(person),
+                    deleteIcon: const Icon(Icons.close),
+                    onDeleted: () {
+                      setState(() {
+                        people.remove(person);
+                      });
+                    },
+                  ),
+                )
+                .toList(),
+          ),
+        const SizedBox(height: 16),
+        if (people.isNotEmpty)
           Column(
             children: [
               const Text(
