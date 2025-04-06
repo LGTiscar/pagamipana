@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Paga mi pana',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 144, 231, 147)),
       ),
       home: const UploadBillPage(),
     );
@@ -31,6 +31,7 @@ class UploadBillPage extends StatefulWidget {
 class _UploadBillPageState extends State<UploadBillPage> {
   bool isPanelCollapsed = true;
   String? uploadedImagePath;
+  int currentStep = 1;
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -54,12 +55,125 @@ class _UploadBillPageState extends State<UploadBillPage> {
     }
   }
 
+  void _showImageSourceActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Upload from Gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _takePhoto();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _getCurrentPage() {
+    switch (currentStep) {
+      case 1:
+        return _buildUploadContent();
+      case 2:
+        return const Placeholder();
+      case 3:
+        return const Placeholder();
+      case 4:
+        return const Placeholder();
+      default:
+        return _buildUploadContent();
+    }
+  }
+
+  Widget _buildUploadContent() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 240, 255, 240),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                'Step 1: Upload Your Bill',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Choose an option to upload your bill',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => _showImageSourceActionSheet(context),
+                icon: const Icon(Icons.cloud_upload),
+                label: const Text('Upload or Take Photo'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: 300,
+          width: 200,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: Center(
+            child: uploadedImagePath == null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.image, size: 50, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text(
+                        'Preview will appear here',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  )
+                : Image.file(
+                    File(uploadedImagePath!),
+                    fit: BoxFit.cover,
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Paga mi pana'),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color.fromARGB(255, 143, 217, 145),
       ),
       body: Row(
         children: [
@@ -83,13 +197,25 @@ class _UploadBillPageState extends State<UploadBillPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStepIndicator('1', 'Upload', true),
+                      GestureDetector(
+                        onTap: () => setState(() => currentStep = 1),
+                        child: _buildStepIndicator('1', 'Upload', currentStep == 1),
+                      ),
                       const SizedBox(height: 16),
-                      _buildStepIndicator('2', 'People', false),
+                      GestureDetector(
+                        onTap: () => setState(() => currentStep = 2),
+                        child: _buildStepIndicator('2', 'People', currentStep == 2),
+                      ),
                       const SizedBox(height: 16),
-                      _buildStepIndicator('3', 'Items', false),
+                      GestureDetector(
+                        onTap: () => setState(() => currentStep = 3),
+                        child: _buildStepIndicator('3', 'Items', currentStep == 3),
+                      ),
                       const SizedBox(height: 16),
-                      _buildStepIndicator('4', 'Summary', false),
+                      GestureDetector(
+                        onTap: () => setState(() => currentStep = 4),
+                        child: _buildStepIndicator('4', 'Summary', currentStep == 4),
+                      ),
                     ],
                   ),
                 ),
@@ -100,103 +226,7 @@ class _UploadBillPageState extends State<UploadBillPage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // Upload content
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 240, 255, 240),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Step 1: Upload Your Bill',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Upload an image of your restaurant bill',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.white,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.cloud_upload, size: 50, color: Colors.grey),
-                              SizedBox(height: 8),
-                              Text(
-                                'Take a photo or upload an image of your bill',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 16, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed: _pickImage,
-                              child: const Text('Upload Image'),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: _takePhoto,
-                              child: const Text('Take Photo'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Rectangular preview box with improved text styling
-                  Container(
-                    height: 300,
-                    width: 200,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                    ),
-                    child: Center(
-                      child: uploadedImagePath == null
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.image, size: 50, color: Colors.grey),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Preview will appear here',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Image.file(
-                              File(uploadedImagePath!),
-                              fit: BoxFit.cover,
-                            ),
-                    ),
-                  ),
-                ],
-              ),
+              child: _getCurrentPage(),
             ),
           ),
         ],
