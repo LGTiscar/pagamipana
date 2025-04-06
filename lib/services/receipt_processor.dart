@@ -6,11 +6,28 @@ import 'package:logger/logger.dart';
 class BillItem {
   final String name;
   final double price;
+  final int quantity; // Added quantity field
+  final double unitPrice; // Added unitPrice field
 
-  BillItem({required this.name, required this.price});
+  BillItem({
+    required this.name,
+    required this.price,
+    required this.quantity,
+    required this.unitPrice,
+  });
 
-  factory BillItem.create({required String name, required double price}) {
-    return BillItem(name: name, price: price);
+  factory BillItem.create({
+    required String name,
+    required double price,
+    int quantity = 1, // Default quantity to 1
+    double? unitPrice,
+  }) {
+    return BillItem(
+      name: name,
+      price: price,
+      quantity: quantity,
+      unitPrice: unitPrice ?? (price / quantity), // Calculate unitPrice if not provided
+    );
   }
 }
 
@@ -88,6 +105,16 @@ IMPORTANT: Your response must ONLY contain this JSON object and nothing else.
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
+
+        // Check if the expected keys exist in the response
+        if (!jsonResponse.containsKey('candidates') ||
+            jsonResponse['candidates'].isEmpty ||
+            !jsonResponse['candidates'][0].containsKey('content') ||
+            !jsonResponse['candidates'][0]['content'].containsKey('parts') ||
+            jsonResponse['candidates'][0]['content']['parts'].isEmpty) {
+          throw Exception('Unexpected response structure from Gemini API');
+        }
+
         final text = jsonResponse['candidates'][0]['content']['parts'][0]['text'];
 
         // Extract JSON from the response
@@ -96,13 +123,30 @@ IMPORTANT: Your response must ONLY contain this JSON object and nothing else.
           final jsonStr = jsonMatch.group(0);
           final Map<String, dynamic> parsedResponse = jsonDecode(jsonStr!);
 
+          // Check if the parsed response contains the expected keys
+          if (!parsedResponse.containsKey('items') || !parsedResponse.containsKey('total')) {
+            throw Exception('Parsed response is missing required keys: items or total');
+          }
+
           final List<dynamic> items = parsedResponse['items'];
           return items.map((item) {
+            // Ensure all required keys exist in each item
+            if (!item.containsKey('name') ||
+                !item.containsKey('quantity') ||
+                !item.containsKey('unitPrice') ||
+                !item.containsKey('totalPrice')) {
+              throw Exception('Item is missing required keys: name, quantity, unitPrice, or totalPrice');
+            }
+
             return BillItem.create(
               name: item['name'],
               price: item['totalPrice'].toDouble(),
+              quantity: item['quantity'],
+              unitPrice: item['unitPrice'].toDouble(),
             );
           }).toList();
+        } else {
+          throw Exception('Failed to extract JSON object from response text');
         }
       }
 

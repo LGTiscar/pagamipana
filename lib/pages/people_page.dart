@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 class PeoplePage extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onNext;
+  final ValueChanged<List<String>> onPeopleUpdated; // Callback to update people list
 
-  const PeoplePage({super.key, required this.onBack, required this.onNext});
+  const PeoplePage({
+    super.key,
+    required this.onBack,
+    required this.onNext,
+    required this.onPeopleUpdated,
+  });
 
   @override
   State<PeoplePage> createState() => _PeoplePageState();
@@ -22,6 +28,7 @@ class _PeoplePageState extends State<PeoplePage> {
       setState(() {
         people.add(name);
         nameController.clear();
+        widget.onPeopleUpdated(people); // Notify parent about the updated list
       });
     }
   }
@@ -71,6 +78,7 @@ class _PeoplePageState extends State<PeoplePage> {
                     onDeleted: () {
                       setState(() {
                         people.remove(person);
+                        widget.onPeopleUpdated(people); // Notify parent about the updated list
                       });
                     },
                   ),

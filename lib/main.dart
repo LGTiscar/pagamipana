@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:pagamipana/services/receipt_processor.dart';
 import 'package:pagamipana/pages/people_page.dart'; // Import PeoplePage
+import 'package:pagamipana/pages/items_page.dart'; // Import ItemsPage
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter bindings are initialized
@@ -36,6 +37,8 @@ class _UploadBillPageState extends State<UploadBillPage> {
   String? uploadedImagePath;
   int currentStep = 1;
   final ReceiptProcessor receiptProcessor = ReceiptProcessor(); // Ensure proper initialization
+  List<Map<String, dynamic>> ocrItems = []; // OCR JSON items
+  List<String> people = []; // List of people added in step 2
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -99,9 +102,24 @@ class _UploadBillPageState extends State<UploadBillPage> {
 
     try {
       final imageBytes = await File(uploadedImagePath!).readAsBytes();
-      await receiptProcessor.processReceipt(imageBytes); // Ensure this call is correct
+      final items = await receiptProcessor.processReceipt(imageBytes);
+
+      if (items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No items detected in the receipt.')),
+        );
+        return;
+      }
 
       setState(() {
+        ocrItems = items.map((item) {
+          return {
+            'name': item.name,
+            'quantity': item.quantity, // Removed `?? 1` since `quantity` is non-nullable
+            'unitPrice': item.unitPrice, // Removed `??` logic since `unitPrice` is non-nullable
+            'isShareable': false, // Default to non-shareable
+          };
+        }).toList();
         currentStep = 2; // Navigate to the People page
       });
     } catch (e) {
@@ -118,10 +136,24 @@ class _UploadBillPageState extends State<UploadBillPage> {
       case 2:
         return PeoplePage(
           onBack: () => setState(() => currentStep = 1),
-          onNext: () => setState(() => currentStep = 3),
+          onNext: () {
+            setState(() {
+              currentStep = 3;
+            });
+          },
+          onPeopleUpdated: (updatedPeople) {
+            setState(() {
+              people = updatedPeople; // Update the people list
+            });
+          },
         );
       case 3:
-        return const Placeholder();
+        return ItemsPage(
+          items: ocrItems,
+          people: people,
+          onBack: () => setState(() => currentStep = 2),
+          onNext: () => setState(() => currentStep = 4),
+        );
       case 4:
         return const Placeholder();
       default:
