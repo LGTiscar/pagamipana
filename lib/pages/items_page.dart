@@ -118,11 +118,13 @@ class _ItemsPageState extends State<ItemsPage> {
                               const Text('Shared'),
                               Switch(
                                 value: isShareable,
-                                onChanged: (value) {
-                                  setState(() {
-                                    item['isShareable'] = value;
-                                  });
-                                },
+                                onChanged: quantity > 1
+                                    ? (value) {
+                                        setState(() {
+                                          item['isShareable'] = value;
+                                        });
+                                      }
+                                    : null, // Disable the switch for items with quantity <= 1
                               ),
                             ],
                           ),
