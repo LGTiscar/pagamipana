@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Paga mi pana',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 144, 231, 147)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 165, 235, 167)),
       ),
       home: const UploadBillPage(),
     );
@@ -137,6 +137,12 @@ class _UploadBillPageState extends State<UploadBillPage> {
         return PeoplePage(
           onBack: () => setState(() => currentStep = 1),
           onNext: () {
+            if (people.length < 2) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Please add at least two names before proceeding.')),
+              );
+              return;
+            }
             setState(() {
               currentStep = 3;
             });
